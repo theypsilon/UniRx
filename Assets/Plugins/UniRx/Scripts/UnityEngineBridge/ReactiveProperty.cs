@@ -176,9 +176,6 @@ namespace UniRx
                 return Disposable.Empty;
             }
 
-            // raise latest value on subscribe
-            observer.OnNext(value);
-
             // subscribe node, node as subscription.
             var next = new ObserverNode<T>(this, observer);
             if (root == null)
@@ -476,6 +473,13 @@ namespace UniRx
     /// </summary>
     public static class ReactivePropertyExtensions
     {
+        public static IDisposable GetValueAndSubscribe<T>(this IReadOnlyReactiveProperty<T> source, IObserver<T> observer)
+        {
+            var disposable = source.Subscribe(observer);
+            observer.OnNext(source.Value);
+            return disposable;
+        }
+
         public static IReadOnlyReactiveProperty<T> ToReactiveProperty<T>(this IObservable<T> source)
         {
             return new ReadOnlyReactiveProperty<T>(source);

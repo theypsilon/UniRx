@@ -10,13 +10,14 @@ namespace UniRx.Tests
 
     public class ReactivePropertyTest
     {
+
         [Test]
-        public void ValueType()
+        public void GetValueAndSubscribe_OnValueType()
         {
             {
                 var rp = new ReactiveProperty<int>(); // 0
 
-                var result = rp.Record();
+                var result = rp.RecordWithGetValueAndSubscribe();
                 result.Values.Is(0);
 
                 rp.Value = 0;
@@ -34,7 +35,7 @@ namespace UniRx.Tests
             {
                 var rp = new ReactiveProperty<int>(20);
 
-                var result = rp.Record();
+                var result = rp.RecordWithGetValueAndSubscribe();
                 result.Values.Is(20);
 
                 rp.Value = 0;
@@ -52,12 +53,12 @@ namespace UniRx.Tests
         }
 
         [Test]
-        public void ClassType()
+        public void GetValueAndSubscribe_OnClassType()
         {
             {
                 var rp = new ReactiveProperty<string>(); // null
 
-                var result = rp.Record();
+                var result = rp.RecordWithGetValueAndSubscribe();
                 result.Values.Is((string)null);
 
                 rp.Value = null;
@@ -75,7 +76,7 @@ namespace UniRx.Tests
             {
                 var rp = new ReactiveProperty<string>("z");
 
-                var result = rp.Record();
+                var result = rp.RecordWithGetValueAndSubscribe();
                 result.Values.Is("z");
 
                 rp.Value = "z";
@@ -92,6 +93,97 @@ namespace UniRx.Tests
 
                 rp.Value = null;
                 result.Values.Is("z", "a", "b", null);
+            }
+        }
+
+        [Test]
+        public void ValueType()
+        {
+            {
+                var rp = new ReactiveProperty<int>(); // 0
+
+                var result = rp.Record();
+                result.Values.Is();
+
+                rp.Value = 1;
+                result.Values.Is(1);
+
+                rp.Value = 1;
+                result.Values.Is(1);
+
+                rp.Value = 10;
+                result.Values.Is(1, 10);
+
+                rp.Value = 100;
+                result.Values.Is(1, 10, 100);
+
+                rp.Value = 100;
+                result.Values.Is(1, 10, 100);
+            }
+            {
+                var rp = new ReactiveProperty<int>(20);
+
+                var result = rp.Record();
+                result.Values.Is();
+
+                rp.Value = 0;
+                result.Values.Is(0);
+
+                rp.Value = 0;
+                result.Values.Is(0);
+
+                rp.Value = 10;
+                result.Values.Is(0, 10);
+
+                rp.Value = 100;
+                result.Values.Is(0, 10, 100);
+
+                rp.Value = 100;
+                result.Values.Is(0, 10, 100);
+            }
+        }
+
+        [Test]
+        public void ClassType()
+        {
+            {
+                var rp = new ReactiveProperty<string>(); // null
+
+                var result = rp.Record();
+                result.Values.Is();
+
+                rp.Value = null;
+                result.Values.Is();
+
+                rp.Value = "a";
+                result.Values.Is("a");
+
+                rp.Value = "b";
+                result.Values.Is("a", "b");
+
+                rp.Value = "b";
+                result.Values.Is("a", "b");
+            }
+            {
+                var rp = new ReactiveProperty<string>("z");
+
+                var result = rp.Record();
+                result.Values.Is();
+
+                rp.Value = "z";
+                result.Values.Is();
+
+                rp.Value = "a";
+                result.Values.Is("a");
+
+                rp.Value = "b";
+                result.Values.Is("a", "b");
+
+                rp.Value = "b";
+                result.Values.Is("a", "b");
+
+                rp.Value = null;
+                result.Values.Is("a", "b", null);
             }
         }
 
@@ -381,6 +473,18 @@ namespace UniRx.Tests
             rp1.Last().Record().Notifications.Is(
                 Notification.CreateOnNext("1"),
                 Notification.CreateOnCompleted<string>());
+        }
+    }
+
+    public static class TestReactivePropertyExtensions
+    {
+
+        public static RecordObserver<T> RecordWithGetValueAndSubscribe<T>(this IReadOnlyReactiveProperty<T> source)
+        {
+            var d = new SingleAssignmentDisposable();
+            var observer = new RecordObserver<T>(d);
+            d.Disposable = source.GetValueAndSubscribe(observer);
+            return observer;
         }
     }
 }
